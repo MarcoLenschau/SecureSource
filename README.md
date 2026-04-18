@@ -55,7 +55,7 @@ The app runs on `http://localhost:3000` by default. Set the `PORT` environment v
 ## Project Structure
 
 ```
-privnote/
+secure-drop/
 ├── src/
 │   ├── server.ts       # Express server & API routes
 │   └── store.ts        # In-memory note store with TTL eviction
