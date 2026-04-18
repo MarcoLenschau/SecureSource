@@ -1,104 +1,138 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SecureDrop — Nachricht öffnen</title>
+  <title>SecureDrop — Nachricht</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <script>
+    const t = localStorage.getItem('theme');
+    const d = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', d);
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     .mono { font-family: 'JetBrains Mono', monospace; }
 
-    .card-glow {
-      box-shadow: 0 0 0 1px rgba(6,182,212,.08), 0 24px 64px rgba(0,0,0,.6);
+    :root {
+      --bg-page:    #f0f4f8;
+      --bg-card:    #ffffff;
+      --bg-input:   #f8fafc;
+      --bg-2nd:     #e2e8f0;
+      --bg-2nd-h:   #cbd5e1;
+      --border:     #e2e8f0;
+      --text:       #0f172a;
+      --text-muted: #64748b;
+      --text-code:  #0284c7;
+      --card-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 24px 64px rgba(0,0,0,.08);
+      --header-bg:  rgba(240,244,248,.8);
+      --header-border: #e2e8f0;
     }
+    html.dark {
+      --bg-page:    #020817;
+      --bg-card:    #0b1120;
+      --bg-input:   #030d1a;
+      --bg-2nd:     #1e293b;
+      --bg-2nd-h:   #273549;
+      --border:     #1e293b;
+      --text:       #e2e8f0;
+      --text-muted: #64748b;
+      --text-code:  #22d3ee;
+      --card-shadow: 0 0 0 1px rgba(6,182,212,.08), 0 24px 64px rgba(0,0,0,.6);
+      --header-bg:  rgba(2,8,23,.8);
+      --header-border: #1e293b;
+    }
+
+    body { background: var(--bg-page); color: var(--text); transition: background .2s, color .2s; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--card-shadow); transition: background .2s, border-color .2s, box-shadow .2s; }
+    .text-muted { color: var(--text-muted); }
+    .border-theme { border-color: var(--border); }
+    .message-box { background: var(--bg-input); border: 1px solid var(--border); box-shadow: inset 0 2px 8px rgba(0,0,0,.15); }
+    .site-header { background: var(--header-bg); border-bottom: 1px solid var(--header-border); backdrop-filter: blur(12px); transition: background .2s, border-color .2s; }
+    .theme-btn { background: var(--bg-2nd); color: var(--text-muted); transition: background .2s, color .2s; }
+    .theme-btn:hover { background: var(--bg-2nd-h); color: var(--text); }
 
     .btn-reveal {
       background: linear-gradient(135deg, #0891b2, #06b6d4);
       box-shadow: 0 0 32px rgba(6,182,212,.3);
       transition: box-shadow .2s, transform .15s;
     }
-    .btn-reveal:hover {
-      box-shadow: 0 0 48px rgba(6,182,212,.5);
-      transform: translateY(-1px);
-    }
-
-    .message-box {
-      background: #020817;
-      border: 1px solid #1e293b;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,.4);
-    }
+    .btn-reveal:hover { box-shadow: 0 0 48px rgba(6,182,212,.5); transform: translateY(-1px); }
 
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     .fade-in { animation: fadeIn .35s ease forwards; }
 
     @keyframes pulse-glow {
       0%, 100% { box-shadow: 0 0 32px rgba(6,182,212,.3); }
-      50% { box-shadow: 0 0 48px rgba(6,182,212,.5); }
+      50%       { box-shadow: 0 0 52px rgba(6,182,212,.55); }
     }
-    #revealBtn:not(.hidden) { animation: pulse-glow 2.5s ease-in-out infinite; }
+    #revealBtn { animation: pulse-glow 2.5s ease-in-out infinite; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center bg-[#020817] text-slate-200 p-6">
+<body class="min-h-screen flex flex-col">
 
-  <div class="w-full max-w-lg card-glow bg-[#0b1120] border border-[#1e293b] rounded-2xl p-8">
-
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-1">
-      <img src="/logo.svg" alt="SecureDrop" class="w-9 h-9" />
-      <span class="mono text-lg font-medium tracking-tight text-white">SecureDrop</span>
-    </div>
-
-    <p class="text-slate-500 text-sm mb-6 ml-11">Verschlüsselte Nachricht für dich</p>
-
-    <!-- Loading -->
-    <div id="loadingState" class="hidden flex items-center gap-2 text-slate-500 text-sm">
-      <svg class="animate-spin w-4 h-4 text-cyan-500" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>
-      </svg>
-      Überprüfe Nachricht …
-    </div>
-
-    <!-- Reveal button -->
-    <div id="revealWrapper" class="hidden text-center">
-      <div class="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs mono px-3 py-1.5 rounded-full">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Einmalig lesbar · danach unwiderruflich gelöscht
+  <!-- Header -->
+  <header class="site-header sticky top-0 z-10 w-full">
+    <div class="max-w-screen-lg mx-auto px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <img src="/logo.svg" alt="SecureDrop" class="w-7 h-7" />
+        <span class="mono text-sm font-medium">SecureDrop</span>
       </div>
-      <br />
-      <button
-        id="revealBtn"
-        class="btn-reveal inline-flex items-center gap-2 py-3 px-8 text-white font-semibold rounded-xl text-sm"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        Nachricht öffnen
-      </button>
+      <button id="themeToggle" class="theme-btn w-9 h-9 flex items-center justify-center rounded-lg" title="Theme wechseln"></button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-lg card rounded-2xl p-8">
+
+      <h1 class="text-xl font-semibold mb-1">Geheime Nachricht</h1>
+      <p class="text-muted text-sm mb-6">Verschlüsselte Nachricht für dich</p>
+
+      <div id="loadingState" class="hidden flex items-center gap-2 text-muted text-sm">
+        <svg class="animate-spin w-4 h-4 text-cyan-500" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>
+        </svg>
+        Überprüfe Nachricht …
+      </div>
+
+      <div id="revealWrapper" class="hidden text-center">
+        <div class="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs mono px-3 py-1.5 rounded-full">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Einmalig lesbar · danach unwiderruflich gelöscht
+        </div>
+        <br />
+        <button id="revealBtn" class="btn-reveal inline-flex items-center gap-2 py-3 px-8 text-white font-semibold rounded-xl text-sm">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Nachricht öffnen
+        </button>
+      </div>
+
+      <div id="messageBox" class="hidden fade-in message-box rounded-xl p-5 mono text-sm whitespace-pre-wrap break-words leading-relaxed"></div>
+
+      <p id="destroyedNote" class="hidden mt-3 text-xs mono text-muted flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Nachricht wurde vom Server gelöscht
+      </p>
+
+      <div id="errorBox" class="hidden fade-in mt-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm mono"></div>
+
+      <div class="mt-8 pt-6 border-t border-theme">
+        <a href="/" class="text-muted hover:text-cyan-500 transition-colors text-sm flex items-center gap-1.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Neue Nachricht erstellen
+        </a>
+      </div>
     </div>
 
-    <!-- Message -->
-    <div id="messageBox" class="hidden fade-in message-box rounded-xl p-5 mono text-sm text-slate-200 whitespace-pre-wrap break-words leading-relaxed"></div>
+    <p class="mt-5 text-muted text-xs mono">Der Schlüssel verlässt nie deinen Browser.</p>
+  </main>
 
-    <p id="destroyedNote" class="hidden mt-3 text-xs mono text-slate-500 flex items-center gap-1.5">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      Nachricht wurde vom Server gelöscht
-    </p>
-
-    <!-- Error -->
-    <div id="errorBox" class="hidden fade-in mt-2 p-4 bg-red-950/40 border border-red-900/50 rounded-xl text-red-400 text-sm mono"></div>
-
-    <div class="mt-8 pt-6 border-t border-[#1e293b]">
-      <a href="/" class="text-sm text-slate-500 hover:text-cyan-400 transition-colors flex items-center gap-1.5">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Neue Nachricht erstellen
-      </a>
-    </div>
-  </div>
-
-  <p class="mt-6 text-slate-600 text-xs mono">Der Schlüssel verlässt nie deinen Browser.</p>
-
+  <script type="module" src="/js/theme.js"></script>
   <script type="module" src="/js/note.js"></script>
 </body>
 </html>
