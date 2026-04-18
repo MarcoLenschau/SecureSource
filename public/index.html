@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privnote — Geheime Nachricht erstellen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-[#0f0f13] text-[#e2e2e2] font-sans p-6">
+  <div class="w-full max-w-xl bg-[#1a1a24] border border-[#2a2a38] rounded-xl p-8">
+    <h1 class="text-xl font-semibold mb-1">Geheime Nachricht</h1>
+    <p class="text-sm text-gray-500 mb-6">End-to-end verschlüsselt · Öffnet sich einmalig · Dann zerstört</p>
+
+    <textarea
+      id="message"
+      placeholder="Nachricht hier eingeben …"
+      class="w-full min-h-40 bg-[#111118] border border-[#2a2a38] rounded-lg text-[#e2e2e2] text-sm p-3 resize-y outline-none focus:border-indigo-500 transition-colors"
+    ></textarea>
+
+    <button
+      id="createBtn"
+      onclick="createNote()"
+      class="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-900 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-colors"
+    >
+      Link erstellen
+    </button>
+
+    <div id="result" class="hidden mt-6 p-4 bg-[#111118] border border-[#2a2a38] rounded-lg text-center">
+      <p class="text-xs text-gray-500 mb-3">Teile diesen Link — er funktioniert nur einmal:</p>
+      <div class="flex gap-2 justify-center">
+        <input
+          id="link"
+          type="text"
+          readonly
+          class="flex-1 bg-[#0f0f13] border border-[#2a2a38] rounded-md text-indigo-400 text-xs px-3 py-2 outline-none"
+        />
+        <button
+          onclick="copyLink()"
+          class="px-4 py-2 bg-[#2a2a38] hover:bg-[#3a3a50] text-[#e2e2e2] rounded-md text-xs transition-colors"
+        >
+          Kopieren
+        </button>
+      </div>
+      <p class="mt-3 text-xs text-amber-400">Nach dem ersten Öffnen ist die Nachricht dauerhaft gelöscht.</p>
+    </div>
+  </div>
+
+  <script>
+    const toBase64url = buf =>
+      btoa(String.fromCharCode(...new Uint8Array(buf)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    async function createNote() {
+      const message = document.getElementById('message').value.trim();
+      if (!message) return;
+
+      const btn = document.getElementById('createBtn');
+      btn.disabled = true;
+      btn.textContent = 'Wird erstellt …';
+
+      const key = await crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv }, key, new TextEncoder().encode(message)
+      );
+      const rawKey = await crypto.subtle.exportKey('raw', key);
+
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ciphertext: toBase64url(encrypted) }),
+      });
+
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Link erstellen';
+        alert('Fehler beim Speichern. Bitte erneut versuchen.');
+        return;
+      }
+
+      const { id } = await res.json();
+      const fragment = `${id}.${toBase64url(rawKey)}.${toBase64url(iv)}`;
+      const link = `${location.origin}/note/${id}#${fragment}`;
+
+      document.getElementById('message').classList.add('hidden');
+      document.getElementById('createBtn').classList.add('hidden');
+      document.getElementById('link').value = link;
+      document.getElementById('result').classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Link erstellen';
+    }
+
+    async function copyLink() {
+      const val = document.getElementById('link').value;
+      await navigator.clipboard.writeText(val);
+    }
+  </script>
+</body>
+</html>
