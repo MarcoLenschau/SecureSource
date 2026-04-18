@@ -3,33 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>burnote — Geheime Nachricht lesen</title>
+  <title>deadrop — Nachricht öffnen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .card-glow {
+      box-shadow: 0 0 0 1px rgba(6,182,212,.08), 0 24px 64px rgba(0,0,0,.6);
+    }
+
+    .btn-reveal {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      box-shadow: 0 0 32px rgba(6,182,212,.3);
+      transition: box-shadow .2s, transform .15s;
+    }
+    .btn-reveal:hover {
+      box-shadow: 0 0 48px rgba(6,182,212,.5);
+      transform: translateY(-1px);
+    }
+
+    .message-box {
+      background: #020817;
+      border: 1px solid #1e293b;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,.4);
+    }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn .35s ease forwards; }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 32px rgba(6,182,212,.3); }
+      50% { box-shadow: 0 0 48px rgba(6,182,212,.5); }
+    }
+    #revealBtn:not(.hidden) { animation: pulse-glow 2.5s ease-in-out infinite; }
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-[#0f0f13] text-[#e2e2e2] font-sans p-6">
-  <div class="w-full max-w-xl bg-[#1a1a24] border border-[#2a2a38] rounded-xl p-8">
-    <h1 class="text-xl font-semibold mb-1">Geheime Nachricht</h1>
-    <p class="text-sm text-gray-500 mb-6">Diese Nachricht wurde für dich verschlüsselt und ist jetzt zerstört.</p>
+<body class="min-h-screen flex flex-col items-center justify-center bg-[#020817] text-slate-200 p-6">
 
-    <div id="loadingState" class="hidden text-sm text-gray-400">Überprüfe Nachricht …</div>
+  <div class="w-full max-w-lg card-glow bg-[#0b1120] border border-[#1e293b] rounded-2xl p-8">
 
-    <button
-      id="revealBtn"
-      class="hidden mx-auto block py-3 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition-colors"
-    >
-      Nachricht öffnen
-    </button>
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-1">
+      <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <span class="mono text-lg font-medium tracking-tight text-white">deadrop</span>
+    </div>
 
-    <div id="messageBox" class="hidden mt-4 bg-[#111118] border border-[#2a2a38] rounded-lg p-4 whitespace-pre-wrap break-words text-sm leading-relaxed"></div>
+    <p class="text-slate-500 text-sm mb-6 ml-11">Verschlüsselte Nachricht für dich</p>
 
-    <p id="destroyedNote" class="hidden mt-3 text-xs text-amber-400">
-      Diese Nachricht existiert nicht mehr auf dem Server.
+    <!-- Loading -->
+    <div id="loadingState" class="hidden flex items-center gap-2 text-slate-500 text-sm">
+      <svg class="animate-spin w-4 h-4 text-cyan-500" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>
+      </svg>
+      Überprüfe Nachricht …
+    </div>
+
+    <!-- Reveal button -->
+    <div id="revealWrapper" class="hidden text-center">
+      <div class="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs mono px-3 py-1.5 rounded-full">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Einmalig lesbar · danach unwiderruflich gelöscht
+      </div>
+      <br />
+      <button
+        id="revealBtn"
+        class="btn-reveal inline-flex items-center gap-2 py-3 px-8 text-white font-semibold rounded-xl text-sm"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Nachricht öffnen
+      </button>
+    </div>
+
+    <!-- Message -->
+    <div id="messageBox" class="hidden fade-in message-box rounded-xl p-5 mono text-sm text-slate-200 whitespace-pre-wrap break-words leading-relaxed"></div>
+
+    <p id="destroyedNote" class="hidden mt-3 text-xs mono text-slate-500 flex items-center gap-1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Nachricht wurde vom Server gelöscht
     </p>
 
-    <div id="errorBox" class="hidden mt-4 p-4 bg-[#1f1015] border border-[#5a2030] rounded-lg text-[#e06070] text-sm"></div>
+    <!-- Error -->
+    <div id="errorBox" class="hidden fade-in mt-2 p-4 bg-red-950/40 border border-red-900/50 rounded-xl text-red-400 text-sm mono"></div>
 
-    <a href="/" class="inline-block mt-6 text-sm text-indigo-400 hover:underline">Neue Nachricht erstellen</a>
+    <div class="mt-8 pt-6 border-t border-[#1e293b]">
+      <a href="/" class="text-sm text-slate-500 hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Neue Nachricht erstellen
+      </a>
+    </div>
   </div>
+
+  <p class="mt-6 text-slate-600 text-xs mono">Der Schlüssel verlässt nie deinen Browser.</p>
 
   <script type="module" src="/js/note.js"></script>
 </body>

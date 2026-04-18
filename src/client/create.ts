@@ -43,6 +43,10 @@ async function createNote(): Promise<void> {
   document.getElementById('result')!.classList.remove('hidden');
 }
 
+const messageEl = document.getElementById('message') as HTMLTextAreaElement;
+const charCount = document.getElementById('charCount')!;
+messageEl.addEventListener('input', () => { charCount.textContent = String(messageEl.value.length); });
+
 document.getElementById('createBtn')!.addEventListener('click', createNote);
 document.getElementById('copyBtn')!.addEventListener('click', async () => {
   const val = (document.getElementById('link') as HTMLInputElement).value;

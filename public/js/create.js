@@ -32,6 +32,9 @@ async function createNote() {
         `${location.origin}/note/${id}#${fragment}`;
     document.getElementById('result').classList.remove('hidden');
 }
+const messageEl = document.getElementById('message');
+const charCount = document.getElementById('charCount');
+messageEl.addEventListener('input', () => { charCount.textContent = String(messageEl.value.length); });
 document.getElementById('createBtn').addEventListener('click', createNote);
 document.getElementById('copyBtn').addEventListener('click', async () => {
     const val = document.getElementById('link').value;
