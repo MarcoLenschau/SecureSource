@@ -1,10 +1,10 @@
 {
-  "name": "privnote",
+  "name": "burnote",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.client.json",
     "start": "node dist/server.js"
   },
   "dependencies": {

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "outDir": "public/js",
+    "rootDir": "src/client",
+    "strict": true
+  },
+  "include": ["src/client"]
+}

@@ -15,15 +15,11 @@ app.use(express.static(PUBLIC_DIR));
 app.post('/api/notes', (req, res) => {
   const { ciphertext } = req.body as { ciphertext?: string };
 
-  if (!ciphertext || typeof ciphertext !== 'string') {
-    res.status(400).json({ error: 'Invalid ciphertext' });
-    return;
-  }
+  if (!ciphertext || typeof ciphertext !== 'string')
+    return void res.status(400).json({ error: 'Invalid ciphertext' });
 
-  if (Buffer.byteLength(ciphertext) > MAX_CIPHERTEXT_BYTES) {
-    res.status(413).json({ error: 'Ciphertext too large' });
-    return;
-  }
+  if (Buffer.byteLength(ciphertext) > MAX_CIPHERTEXT_BYTES)
+    return void res.status(413).json({ error: 'Ciphertext too large' });
 
   const id = randomBytes(8).toString('hex');
   store.set(id, { ciphertext, createdAt: Date.now() });
@@ -36,10 +32,8 @@ app.head('/api/notes/:id', (req, res) => {
 
 app.get('/api/notes/:id', (req, res) => {
   const note = store.getAndDelete(req.params.id);
-  if (!note) {
-    res.status(404).json({ error: 'Note not found or already read' });
-    return;
-  }
+  if (!note)
+    return void res.status(404).json({ error: 'Note not found or already read' });
   res.json({ ciphertext: note.ciphertext });
 });
 

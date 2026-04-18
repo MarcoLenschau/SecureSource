@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Privnote — Geheime Nachricht erstellen</title>
+  <title>burnote — Geheime Nachricht erstellen</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-[#0f0f13] text-[#e2e2e2] font-sans p-6">
@@ -19,7 +19,6 @@
 
     <button
       id="createBtn"
-      onclick="createNote()"
       class="mt-4 w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-900 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-colors"
     >
       Link erstellen
@@ -35,7 +34,7 @@
           class="flex-1 bg-[#0f0f13] border border-[#2a2a38] rounded-md text-indigo-400 text-xs px-3 py-2 outline-none"
         />
         <button
-          onclick="copyLink()"
+          id="copyBtn"
           class="px-4 py-2 bg-[#2a2a38] hover:bg-[#3a3a50] text-[#e2e2e2] rounded-md text-xs transition-colors"
         >
           Kopieren
@@ -45,57 +44,6 @@
     </div>
   </div>
 
-  <script>
-    const toBase64url = buf =>
-      btoa(String.fromCharCode(...new Uint8Array(buf)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    async function createNote() {
-      const message = document.getElementById('message').value.trim();
-      if (!message) return;
-
-      const btn = document.getElementById('createBtn');
-      btn.disabled = true;
-      btn.textContent = 'Wird erstellt …';
-
-      const key = await crypto.subtle.generateKey(
-        { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']
-      );
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv }, key, new TextEncoder().encode(message)
-      );
-      const rawKey = await crypto.subtle.exportKey('raw', key);
-
-      const res = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ciphertext: toBase64url(encrypted) }),
-      });
-
-      if (!res.ok) {
-        btn.disabled = false;
-        btn.textContent = 'Link erstellen';
-        alert('Fehler beim Speichern. Bitte erneut versuchen.');
-        return;
-      }
-
-      const { id } = await res.json();
-      const fragment = `${id}.${toBase64url(rawKey)}.${toBase64url(iv)}`;
-      const link = `${location.origin}/note/${id}#${fragment}`;
-
-      document.getElementById('message').classList.add('hidden');
-      document.getElementById('createBtn').classList.add('hidden');
-      document.getElementById('link').value = link;
-      document.getElementById('result').classList.remove('hidden');
-      btn.disabled = false;
-      btn.textContent = 'Link erstellen';
-    }
-
-    async function copyLink() {
-      const val = document.getElementById('link').value;
-      await navigator.clipboard.writeText(val);
-    }
-  </script>
+  <script type="module" src="/js/create.js"></script>
 </body>
 </html>
