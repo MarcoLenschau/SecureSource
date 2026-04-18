@@ -55,6 +55,7 @@
     .site-header { background: var(--header-bg); border-bottom: 1px solid var(--header-border); backdrop-filter: blur(12px); transition: background .2s, border-color .2s; }
     .input-field { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); transition: background .2s, border-color .2s; }
     .input-field:focus { box-shadow: 0 0 0 2px rgba(6,182,212,.3); outline: none; }
+    .site-footer { border-top: 1px solid var(--border); background: var(--bg-card); transition: background .2s, border-color .2s; }
     .theme-btn { background: var(--bg-2nd); color: var(--text-muted); transition: background .2s, color .2s; }
     .theme-btn:hover { background: var(--bg-2nd-h); color: var(--text); }
 
@@ -144,8 +145,17 @@
       </div>
     </div>
 
-    <p class="mt-4 mb-4 text-muted text-xs mono">Der Schlüssel verlässt nie deinen Browser.</p>
   </main>
+
+  <footer class="site-footer w-full py-4 mt-auto">
+    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-muted text-xs mono">
+      <div class="flex items-center gap-2">
+        <img src="/logo.svg" alt="SecureDrop" class="w-4 h-4 opacity-50" />
+        <span>SecureDrop &copy; 2025</span>
+      </div>
+      <span>Der Schlüssel verlässt nie deinen Browser · Zero-knowledge</span>
+    </div>
+  </footer>
 
   <script type="module" src="/js/theme.js"></script>
   <script type="module" src="/js/note.js"></script>
