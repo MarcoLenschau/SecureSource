@@ -1,4 +1,4 @@
-# deadrop
+# SecureDrop
 
 A self-hosted, end-to-end encrypted one-time note sharing app. Messages are encrypted in the browser before being sent to the server — the server never sees the plaintext. Each note can only be opened once and is permanently deleted afterwards.
 
