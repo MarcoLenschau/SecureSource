@@ -8,10 +8,11 @@ const fromBase64url = (str: string): Uint8Array<ArrayBuffer> => {
 /** Returns the DOM element with the given id. */
 const el = (id: string) => document.getElementById(id)!;
 
-/** Shows an error message and hides the loading and reveal states. */
+/** Shows an error message and hides all other states. */
 function showError(msg: string): void {
   el('loadingState').classList.add('hidden');
   el('revealWrapper').classList.add('hidden');
+  el('revealedState').classList.add('hidden');
   el('errorBox').textContent = msg;
   el('errorBox').classList.remove('hidden');
 }
@@ -71,8 +72,7 @@ async function decryptAndDisplay(parts: string[], ciphertextB64: string): Promis
   );
   el('loadingState').classList.add('hidden');
   el('messageBox').textContent = new TextDecoder().decode(decrypted);
-  el('messageBox').classList.remove('hidden');
-  el('destroyedNote').classList.remove('hidden');
+  el('revealedState').classList.remove('hidden');
 }
 
 /** Returns the note ID from the current URL path. */
@@ -94,7 +94,17 @@ async function revealNote(): Promise<void> {
   }
 }
 
-/** Validates the fragment, checks whether the note exists, and shows the password input if needed. */
+/** Plays the burn animation on the message wrap, then shows the destroyed state. */
+function destroyNote(): void {
+  const wrap = el('messageWrap');
+  wrap.classList.add('burning');
+  wrap.addEventListener('animationend', () => {
+    el('revealedState').classList.add('hidden');
+    el('destroyedState').classList.remove('hidden');
+  }, { once: true });
+}
+
+/** Validates the fragment and checks whether the note exists before showing the reveal button. */
 async function init(): Promise<void> {
   const parts = validateFragment(location.hash.slice(1));
   if (!parts) return;
@@ -111,5 +121,6 @@ async function init(): Promise<void> {
 }
 
 el('revealBtn').addEventListener('click', revealNote);
+el('destroyBtn').addEventListener('click', destroyNote);
 init();
 export {};
