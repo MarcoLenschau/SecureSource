@@ -19,3 +19,4 @@ document.getElementById('themeToggle')!.addEventListener('click', () => {
   localStorage.setItem('theme', isDark ? 'light' : 'dark');
   applyTheme(!isDark);
 });
+export {};
