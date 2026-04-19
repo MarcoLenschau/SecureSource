@@ -118,5 +118,5 @@ const main = `
 `.trim();
 
 export function createPage(): string {
-  return layout('SecureDrop — Nachricht', styles, main, ['/js/theme.js', '/js/create.js']);
+  return layout('SecureSource — Nachricht', styles, main, ['/js/theme.js', '/js/create.js']);
 }

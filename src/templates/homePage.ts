@@ -21,8 +21,8 @@ const styles = `
 const main = `
   <main class="flex-1 flex flex-col items-center justify-center px-4">
     <div class="text-center mb-10">
-      <img src="/logo.svg" alt="SecureDrop" class="w-12 h-12 mx-auto mb-4" />
-      <h1 class="text-2xl font-semibold mb-2">SecureDrop</h1>
+      <img src="/logo.svg" alt="SecureSource" class="w-12 h-12 mx-auto mb-4" />
+      <h1 class="text-2xl font-semibold mb-2">SecureSource</h1>
       <p class="text-muted text-sm">End-to-end verschlüsselt · Einmalig lesbar · Zero-knowledge</p>
     </div>
 
@@ -57,5 +57,5 @@ const main = `
 `.trim();
 
 export function homePage(): string {
-  return layout('SecureDrop', styles, main, ['/js/theme.js']);
+  return layout('SecureSource', styles, main, ['/js/theme.js']);
 }

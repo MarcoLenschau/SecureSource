@@ -1,6 +1,6 @@
 {
-  "name": "securedrop",
-  "version": "1.0.0",
+  "name": "securesource",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
