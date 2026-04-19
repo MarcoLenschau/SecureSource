@@ -16,11 +16,11 @@ function showError(msg: string): void {
   el('errorBox').classList.remove('hidden');
 }
 
-/** Validates the URL fragment and returns its parts, or null if invalid. */
+/** Validates the URL fragment (3 or 4 parts) and returns its parts, or null if invalid. */
 function validateFragment(fragment: string): string[] | null {
   if (!fragment) { showError('Ungültiger Link — kein Schlüssel im Fragment.'); return null; }
   const parts = fragment.split('.');
-  if (parts.length !== 3) { showError('Ungültiges Link-Format.'); return null; }
+  if (parts.length !== 3 && parts.length !== 4) { showError('Ungültiges Link-Format.'); return null; }
   return parts;
 }
 
@@ -32,13 +32,42 @@ async function fetchCiphertext(id: string): Promise<string> {
   return ciphertext;
 }
 
-/** Decrypts the ciphertext and renders the plaintext message in the UI. */
-async function decryptAndDisplay(ciphertextB64: string, keyB64: string, ivB64: string): Promise<void> {
-  const key = await crypto.subtle.importKey(
-    'raw', fromBase64url(keyB64), { name: 'AES-GCM' }, false, ['decrypt']
+/** Derives an AES-KW key from a password and salt using PBKDF2 (600k iterations). */
+async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+    base,
+    { name: 'AES-KW', length: 256 },
+    false,
+    ['unwrapKey']
   );
+}
+
+/** Unwraps an AES-GCM decryption key using a password-derived AES-KW wrapping key. */
+async function unwrapDecryptKey(wrappedKeyB64: string, password: string, saltB64: string): Promise<CryptoKey> {
+  const wrappingKey = await deriveWrappingKey(password, fromBase64url(saltB64));
+  return crypto.subtle.unwrapKey(
+    'raw', fromBase64url(wrappedKeyB64), wrappingKey, 'AES-KW',
+    { name: 'AES-GCM' }, false, ['decrypt']
+  );
+}
+
+/** Imports the AES-GCM decryption key — directly for 3-part fragments, via password for 4-part. */
+async function importDecryptKey(parts: string[]): Promise<CryptoKey> {
+  if (parts.length === 3) {
+    return crypto.subtle.importKey('raw', fromBase64url(parts[1]), { name: 'AES-GCM' }, false, ['decrypt']);
+  }
+  const password = (el('passwordInput') as HTMLInputElement).value;
+  return unwrapDecryptKey(parts[1], password, parts[3]);
+}
+
+/** Decrypts the note ciphertext using the fragment parts and renders the plaintext message. */
+async function decryptAndDisplay(parts: string[], ciphertextB64: string): Promise<void> {
+  const key = await importDecryptKey(parts);
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: fromBase64url(ivB64) }, key, fromBase64url(ciphertextB64)
+    { name: 'AES-GCM', iv: fromBase64url(parts[2]) }, key, fromBase64url(ciphertextB64)
   );
   el('loadingState').classList.add('hidden');
   el('messageBox').textContent = new TextDecoder().decode(decrypted);
@@ -51,20 +80,21 @@ async function revealNote(): Promise<void> {
   el('revealWrapper').classList.add('hidden');
   el('loadingState').classList.remove('hidden');
   const parts = location.hash.slice(1).split('.');
-  if (parts.length !== 3) return showError('Ungültiges Link-Format.');
-  const [id, keyB64, ivB64] = parts;
+  if (parts.length !== 3 && parts.length !== 4) return showError('Ungültiges Link-Format.');
+  const [id] = parts;
   try {
     const ciphertextB64 = await fetchCiphertext(id);
-    await decryptAndDisplay(ciphertextB64, keyB64, ivB64);
+    await decryptAndDisplay(parts, ciphertextB64);
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten.');
   }
 }
 
-/** Validates the fragment and checks whether the note exists before showing the reveal button. */
+/** Validates the fragment, checks whether the note exists, and shows the password input if needed. */
 async function init(): Promise<void> {
   const parts = validateFragment(location.hash.slice(1));
   if (!parts) return;
+  if (parts.length === 4) el('passwordWrapper').classList.remove('hidden');
   el('loadingState').classList.remove('hidden');
   try {
     const res = await fetch(`/api/notes/${parts[0]}`, { method: 'HEAD' });

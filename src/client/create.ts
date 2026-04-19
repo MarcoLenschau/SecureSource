@@ -28,11 +28,40 @@ async function postNote(ciphertext: string): Promise<string> {
   return id;
 }
 
+/** Derives an AES-KW wrapping key from a password using PBKDF2 (600k iterations). */
+async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+    base,
+    { name: 'AES-KW', length: 256 },
+    false,
+    ['wrapKey', 'unwrapKey']
+  );
+}
+
+/** Wraps the raw AES key with a password-derived AES-KW key and returns wrapped key and salt. */
+async function wrapKeyWithPassword(rawKey: ArrayBuffer, password: string): Promise<{ wrappedKey: ArrayBuffer; salt: Uint8Array<ArrayBuffer> }> {
+  const salt = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
+  const wrappingKey = await deriveWrappingKey(password, salt);
+  const keyToWrap = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+  const wrappedKey = await crypto.subtle.wrapKey('raw', keyToWrap, wrappingKey, 'AES-KW');
+  return { wrappedKey, salt };
+}
+
+/** Builds the URL fragment — 3 parts without password, 4 parts with password. */
+async function buildFragment(id: string, rawKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, password: string): Promise<string> {
+  if (!password) return `${id}.${toBase64url(rawKey)}.${toBase64url(iv)}`;
+  const { wrappedKey, salt } = await wrapKeyWithPassword(rawKey, password);
+  return `${id}.${toBase64url(wrappedKey)}.${toBase64url(iv)}.${toBase64url(salt)}`;
+}
+
 /** Hides the form and displays the shareable link. */
-function showNoteLink(id: string, rawKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, messageEl: HTMLTextAreaElement, btn: HTMLButtonElement): void {
-  const fragment = `${id}.${toBase64url(rawKey)}.${toBase64url(iv)}`;
+function showNoteLink(id: string, fragment: string, messageEl: HTMLTextAreaElement, btn: HTMLButtonElement): void {
   messageEl.classList.add('hidden');
   btn.classList.add('hidden');
+  (document.getElementById('password') as HTMLInputElement)?.closest('.mt-3')?.classList.add('hidden');
   (document.getElementById('link') as HTMLInputElement).value = `${location.origin}/note/${id}#${fragment}`;
   document.getElementById('result')!.classList.remove('hidden');
 }
@@ -40,7 +69,7 @@ function showNoteLink(id: string, rawKey: ArrayBuffer, iv: Uint8Array<ArrayBuffe
 /** Resets the create button and shows an error alert. */
 function handleCreateError(btn: HTMLButtonElement): void {
   btn.disabled = false;
-  btn.textContent = 'Link erstellen';
+  btn.textContent = 'Link generieren';
   alert('Fehler beim Speichern. Bitte erneut versuchen.');
 }
 
@@ -58,10 +87,11 @@ async function createNote(): Promise<void> {
   const message = messageEl.value.trim();
   if (!message) return;
   const btn = initCreateButton();
+  const password = (document.getElementById('password') as HTMLInputElement)?.value ?? '';
   try {
     const { encrypted, rawKey, iv } = await encryptMessage(message);
     const id = await postNote(toBase64url(encrypted));
-    showNoteLink(id, rawKey, iv, messageEl, btn);
+    showNoteLink(id, await buildFragment(id, rawKey, iv, password), messageEl, btn);
   } catch {
     handleCreateError(btn);
   }
