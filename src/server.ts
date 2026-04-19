@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { store } from './store.js';
 import { fileStore } from './fileStore.js';
+import { homePage } from './templates/homePage.js';
 import { createPage } from './templates/createPage.js';
 import { notePage } from './templates/notePage.js';
 
@@ -17,7 +18,8 @@ app.use(express.json({ limit: '70kb' }));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(PUBLIC_DIR));
 
-app.get('/', (_req, res) => res.send(createPage()));
+app.get('/', (_req, res) => res.send(homePage()));
+app.get('/create', (_req, res) => res.send(createPage()));
 
 app.post('/api/notes', (req, res) => {
   const { ciphertext } = req.body as { ciphertext?: string };
