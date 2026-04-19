@@ -78,3 +78,4 @@ async function init(): Promise<void> {
 
 el('revealBtn').addEventListener('click', revealNote);
 init();
+export {};
