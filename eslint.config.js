@@ -19,4 +19,11 @@ export default [
       "jsdoc/require-jsdoc": ["warn", { require: { FunctionDeclaration: true, ArrowFunctionExpression: true } }],
     },
   },
+  {
+    files: ["**/__tests__/**/*.test.ts", "**/*.test.ts", "**/*.spec.ts"],
+    rules: {
+      "max-lines-per-function": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ];
