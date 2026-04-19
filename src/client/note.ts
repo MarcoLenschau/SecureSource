@@ -16,11 +16,11 @@ function showError(msg: string): void {
   el('errorBox').classList.remove('hidden');
 }
 
-/** Validates the URL fragment (3 or 4 parts) and returns its parts, or null if invalid. */
+/** Validates the URL fragment (2 or 3 parts) and returns its parts, or null if invalid. */
 function validateFragment(fragment: string): string[] | null {
   if (!fragment) { showError('Ungültiger Link — kein Schlüssel im Fragment.'); return null; }
   const parts = fragment.split('.');
-  if (parts.length !== 3 && parts.length !== 4) { showError('Ungültiges Link-Format.'); return null; }
+  if (parts.length !== 2 && parts.length !== 3) { showError('Ungültiges Link-Format.'); return null; }
   return parts;
 }
 
@@ -54,20 +54,20 @@ async function unwrapDecryptKey(wrappedKeyB64: string, password: string, saltB64
   );
 }
 
-/** Imports the AES-GCM decryption key — directly for 3-part fragments, via password for 4-part. */
+/** Imports the AES-GCM decryption key — directly for 2-part fragments, via password for 3-part. */
 async function importDecryptKey(parts: string[]): Promise<CryptoKey> {
-  if (parts.length === 3) {
-    return crypto.subtle.importKey('raw', fromBase64url(parts[1]), { name: 'AES-GCM' }, false, ['decrypt']);
+  if (parts.length === 2) {
+    return crypto.subtle.importKey('raw', fromBase64url(parts[0]), { name: 'AES-GCM' }, false, ['decrypt']);
   }
   const password = (el('passwordInput') as HTMLInputElement).value;
-  return unwrapDecryptKey(parts[1], password, parts[3]);
+  return unwrapDecryptKey(parts[0], password, parts[2]);
 }
 
 /** Decrypts the note ciphertext using the fragment parts and renders the plaintext message. */
 async function decryptAndDisplay(parts: string[], ciphertextB64: string): Promise<void> {
   const key = await importDecryptKey(parts);
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: fromBase64url(parts[2]) }, key, fromBase64url(ciphertextB64)
+    { name: 'AES-GCM', iv: fromBase64url(parts[1]) }, key, fromBase64url(ciphertextB64)
   );
   el('loadingState').classList.add('hidden');
   el('messageBox').textContent = new TextDecoder().decode(decrypted);
@@ -75,15 +75,19 @@ async function decryptAndDisplay(parts: string[], ciphertextB64: string): Promis
   el('destroyedNote').classList.remove('hidden');
 }
 
+/** Returns the note ID from the current URL path. */
+function getNoteId(): string {
+  return location.pathname.split('/').pop() ?? '';
+}
+
 /** Fetches and decrypts the note referenced in the URL fragment. */
 async function revealNote(): Promise<void> {
   el('revealWrapper').classList.add('hidden');
   el('loadingState').classList.remove('hidden');
   const parts = location.hash.slice(1).split('.');
-  if (parts.length !== 3 && parts.length !== 4) return showError('Ungültiges Link-Format.');
-  const [id] = parts;
+  if (parts.length !== 2 && parts.length !== 3) return showError('Ungültiges Link-Format.');
   try {
-    const ciphertextB64 = await fetchCiphertext(id);
+    const ciphertextB64 = await fetchCiphertext(getNoteId());
     await decryptAndDisplay(parts, ciphertextB64);
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten.');
@@ -94,10 +98,10 @@ async function revealNote(): Promise<void> {
 async function init(): Promise<void> {
   const parts = validateFragment(location.hash.slice(1));
   if (!parts) return;
-  if (parts.length === 4) el('passwordWrapper').classList.remove('hidden');
+  if (parts.length === 3) el('passwordWrapper').classList.remove('hidden');
   el('loadingState').classList.remove('hidden');
   try {
-    const res = await fetch(`/api/notes/${parts[0]}`, { method: 'HEAD' });
+    const res = await fetch(`/api/notes/${getNoteId()}`, { method: 'HEAD' });
     el('loadingState').classList.add('hidden');
     if (!res.ok) return showError('Nachricht wurde nicht gefunden.');
     el('revealWrapper').classList.remove('hidden');

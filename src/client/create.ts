@@ -50,11 +50,11 @@ async function wrapKeyWithPassword(rawKey: ArrayBuffer, password: string): Promi
   return { wrappedKey, salt };
 }
 
-/** Builds the URL fragment — 3 parts without password, 4 parts with password. */
-async function buildFragment(id: string, rawKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, password: string): Promise<string> {
-  if (!password) return `${id}.${toBase64url(rawKey)}.${toBase64url(iv)}`;
+/** Builds the URL fragment — 2 parts without password, 3 parts with password. ID is in the URL path. */
+async function buildFragment(rawKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, password: string): Promise<string> {
+  if (!password) return `${toBase64url(rawKey)}.${toBase64url(iv)}`;
   const { wrappedKey, salt } = await wrapKeyWithPassword(rawKey, password);
-  return `${id}.${toBase64url(wrappedKey)}.${toBase64url(iv)}.${toBase64url(salt)}`;
+  return `${toBase64url(wrappedKey)}.${toBase64url(iv)}.${toBase64url(salt)}`;
 }
 
 /** Hides the form and displays the shareable link. */
@@ -91,7 +91,7 @@ async function createNote(): Promise<void> {
   try {
     const { encrypted, rawKey, iv } = await encryptMessage(message);
     const id = await postNote(toBase64url(encrypted));
-    showNoteLink(id, await buildFragment(id, rawKey, iv, password), messageEl, btn);
+    showNoteLink(id, await buildFragment(rawKey, iv, password), messageEl, btn);
   } catch {
     handleCreateError(btn);
   }

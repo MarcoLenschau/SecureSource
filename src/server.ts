@@ -24,7 +24,7 @@ app.post('/api/notes', (req, res) => {
   if (Buffer.byteLength(ciphertext) > MAX_CIPHERTEXT_BYTES)
     return void res.status(413).json({ error: 'Ciphertext too large' });
 
-  const id = randomBytes(8).toString('hex');
+  const id = randomBytes(6).toString('base64url');
   store.set(id, { ciphertext, createdAt: Date.now() });
   res.status(201).json({ id });
 });
