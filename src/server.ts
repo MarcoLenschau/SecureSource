@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import { store } from './store.js';
 import { fileStore } from './fileStore.js';
+import { createPage } from './templates/createPage.js';
+import { notePage } from './templates/notePage.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -14,6 +16,8 @@ const app = express();
 app.use(express.json({ limit: '70kb' }));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(PUBLIC_DIR));
+
+app.get('/', (_req, res) => res.send(createPage()));
 
 app.post('/api/notes', (req, res) => {
   const { ciphertext } = req.body as { ciphertext?: string };
@@ -65,9 +69,7 @@ app.get('/api/files/:id', (req, res) => {
   res.json({ ciphertext: file.ciphertext });
 });
 
-app.get('/note/:id', (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'note.html'));
-});
+app.get('/note/:id', (_req, res) => res.send(notePage()));
 
 app.get('/upload', (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'upload.html'));
