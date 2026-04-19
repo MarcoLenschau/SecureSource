@@ -34,7 +34,7 @@ async function fetchCiphertext(id: string): Promise<string> {
 }
 
 /** Derives an AES-KW key from a password and salt using PBKDF2 (600k iterations). */
-async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveWrappingKey(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(

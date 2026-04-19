@@ -29,7 +29,7 @@ async function postNote(ciphertext: string): Promise<string> {
 }
 
 /** Derives an AES-KW wrapping key from a password using PBKDF2 (600k iterations). */
-async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveWrappingKey(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
