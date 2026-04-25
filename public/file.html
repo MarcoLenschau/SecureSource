@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SecureDrop — View File</title>
+  <title>View File</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
@@ -118,42 +118,22 @@
         </button>
       </div>
 
-      <!-- File preview area -->
+      <!-- File area -->
       <div id="previewArea" class="hidden fade-in">
         <div class="flex items-center gap-2 mb-4">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           <span class="text-emerald-500 text-xs font-medium">File decrypted successfully</span>
         </div>
 
-        <div class="mb-3 flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3 p-3 rounded-xl input-field mb-3">
           <span id="fileName" class="mono text-xs text-muted truncate"></span>
-          <button id="downloadBtn" class="btn-secondary flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium shrink-0 ml-2">
+          <button id="downloadBtn" class="btn-secondary flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium shrink-0">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download
           </button>
         </div>
 
-        <!-- Image preview -->
-        <div id="imagePreview" class="hidden text-center">
-          <img id="previewImage" alt="File preview" />
-        </div>
-
-        <!-- Text preview -->
-        <div id="textPreview" class="hidden">
-          <pre id="previewText" class="message-box rounded-xl p-4 mono text-xs whitespace-pre-wrap break-words leading-relaxed overflow-auto max-h-96"></pre>
-        </div>
-
-        <!-- PDF preview -->
-        <div id="pdfPreview" class="hidden">
-          <iframe id="previewPdf" title="PDF preview"></iframe>
-        </div>
-
-        <!-- Fallback download only -->
-        <div id="downloadFallback" class="hidden text-center py-4">
-          <p class="text-muted text-sm mb-3">Preview not available for this file type.</p>
-        </div>
-
-        <p id="destroyedFile" class="mt-3 text-xs mono text-muted flex items-center gap-1.5">
+        <p class="mt-2 text-xs mono text-muted flex items-center gap-1.5">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           File was deleted from the server
         </p>

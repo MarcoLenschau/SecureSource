@@ -85,18 +85,27 @@ const headerHtml = `
   <header class="site-header sticky top-0 z-10 w-full">
     <div class="max-w-screen-lg mx-auto px-4 sm:px-6 md:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <img src="/logo.svg" alt="SecureSource" class="w-7 h-7" />
-        <span class="mono text-sm font-medium">SecureSource</span>
+        <img src="/logo.svg" alt="SecureDrop" class="w-7 h-7" />
+        <span class="mono text-sm font-medium">SecureDrop</span>
       </div>
       <button id="themeToggle" class="theme-btn w-9 h-9 flex items-center justify-center rounded-lg" title="Theme wechseln"></button>
     </div>
   </header>
 `.trim();
 
-export function layout(title: string, pageStyles: string, mainContent: string, scripts: string[]): string {
-  return `<!DOCTYPE html>
-<html lang="de" class="dark">
-<head>
+/** Renders the script tags for the given paths. */
+function renderScripts(scripts: string[]): string {
+  return scripts.map(s => `<script type="module" src="${s}"></script>`).join('\n  ');
+}
+
+/** Renders the <style> block combining shared and page-specific styles. */
+function renderStyles(pageStyles: string): string {
+  return `<style>\n${sharedStyles}\n${pageStyles}\n  </style>`;
+}
+
+/** Renders the <head> block with title, fonts, styles and theme script. */
+function renderHead(title: string, pageStyles: string): string {
+  return `<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
@@ -105,18 +114,22 @@ export function layout(title: string, pageStyles: string, mainContent: string, s
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <script>${themeScript}</script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-${sharedStyles}
-${pageStyles}
-  </style>
-</head>
+  ${renderStyles(pageStyles)}
+</head>`;
+}
+
+/** Renders the full HTML shell with shared styles, header, page content and scripts. */
+export function layout(title: string, pageStyles: string, mainContent: string, scripts: string[]): string {
+  return `<!DOCTYPE html>
+<html lang="de" class="dark">
+${renderHead(title, pageStyles)}
 <body class="min-h-screen flex flex-col">
 
   ${headerHtml}
 
   ${mainContent}
 
-  ${scripts.map(s => `<script type="module" src="${s}"></script>`).join('\n  ')}
+  ${renderScripts(scripts)}
 </body>
 </html>`;
 }

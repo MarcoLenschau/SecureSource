@@ -109,14 +109,12 @@ const main = `
             Nachricht wird nach erstem Öffnen permanent gelöscht
           </p>
         </div>
-
       </div>
-
       <p class="mt-4 mb-4 text-center text-muted text-xs mono">Der Schlüssel verlässt nie deinen Browser.</p>
     </div>
   </main>
 `.trim();
 
 export function createPage(): string {
-  return layout('SecureSource — Nachricht', styles, main, ['/js/theme.js', '/js/create.js']);
+  return layout('Message', styles, main, ['/js/theme.js', '/js/create.js']);
 }

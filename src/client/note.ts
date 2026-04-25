@@ -80,6 +80,31 @@ function getNoteId(): string {
   return location.pathname.split('/').pop() ?? '';
 }
 
+/** Cached ciphertext after first fetch — allows password retry without re-fetching. */
+let cachedCiphertext: string | null = null;
+
+/** Loads the ciphertext once, using the cache on subsequent calls. */
+async function getCiphertext(): Promise<string> {
+  if (!cachedCiphertext) cachedCiphertext = await fetchCiphertext(getNoteId());
+  return cachedCiphertext;
+}
+
+/** Shows the retry UI for password notes and auto-hides the error after 5 seconds. */
+function enablePasswordRetry(): void {
+  el('revealWrapper').classList.remove('hidden');
+  setTimeout(() => el('errorBox').classList.add('hidden'), 5000);
+}
+
+/** Handles decryption errors: allows retry for password notes. */
+function handleRevealError(err: unknown, parts: string[]): void {
+  const isPasswordNote = parts.length === 3;
+  const msg = (err instanceof Error && err.message)
+    ? err.message
+    : isPasswordNote ? 'Wrong password — please try again.' : 'An error occurred.';
+  showError(msg);
+  if (isPasswordNote && cachedCiphertext) enablePasswordRetry();
+}
+
 /** Fetches and decrypts the note referenced in the URL fragment. */
 async function revealNote(): Promise<void> {
   el('revealWrapper').classList.add('hidden');
@@ -87,10 +112,9 @@ async function revealNote(): Promise<void> {
   const parts = location.hash.slice(1).split('.');
   if (parts.length !== 2 && parts.length !== 3) return showError('Ungültiges Link-Format.');
   try {
-    const ciphertextB64 = await fetchCiphertext(getNoteId());
-    await decryptAndDisplay(parts, ciphertextB64);
+    await decryptAndDisplay(parts, await getCiphertext());
   } catch (err) {
-    showError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten.');
+    handleRevealError(err, parts);
   }
 }
 

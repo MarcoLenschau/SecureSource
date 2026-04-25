@@ -97,5 +97,5 @@ const main = `
 `.trim();
 
 export function notePage(): string {
-  return layout('SecureSource', styles, main, ['/js/theme.js', '/js/note.js']);
+  return layout('SecureDrop', styles, main, ['/js/theme.js', '/js/note.js']);
 }
