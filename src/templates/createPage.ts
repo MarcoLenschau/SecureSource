@@ -26,7 +26,7 @@ const styles = `
 
 const main = `
   <main class="flex-1 flex flex-col items-center justify-center">
-    <div class="w-full sm:max-w-lg sm:my-6 sm:mx-4">
+    <div class="w-full sm:max-w-lg md:max-w-xl sm:my-6 md:my-8 sm:mx-4">
 
       <div class="flex items-center gap-3 mb-5 px-5 sm:px-0">
         <a href="/" class="text-muted hover:text-cyan-500 transition-colors">
@@ -50,7 +50,7 @@ const main = `
         </div>
       </div>
 
-      <div class="card sm:rounded-2xl p-5 sm:p-8">
+      <div class="card sm:rounded-2xl p-5 sm:p-8 md:p-10">
 
         <div id="composeState">
           <h1 class="text-xl font-semibold mb-1">Geheime Nachricht</h1>
