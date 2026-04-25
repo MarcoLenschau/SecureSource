@@ -30,7 +30,7 @@ const styles = `
 
 const main = `
   <main class="flex-1 flex flex-col items-center justify-center">
-    <div class="w-full sm:max-w-lg card sm:rounded-2xl p-5 sm:p-8 sm:my-6 sm:mx-4">
+    <div class="w-full sm:max-w-lg md:max-w-xl card sm:rounded-2xl p-5 sm:p-8 md:p-10 sm:my-6 md:my-8 sm:mx-4">
 
       <h1 class="text-xl font-semibold mb-1">Geheime Nachricht</h1>
       <p class="text-muted text-sm mb-6">Verschlüsselte Nachricht für dich</p>
