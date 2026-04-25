@@ -117,7 +117,7 @@ describe('NoteStore', () => {
       store.set('new', freshNote);
 
       // Call the private evictExpired method via reflection
-      (store as any).evictExpired();
+      store.evictExpired();
 
       expect(store.has('old')).toBe(false);
       expect(store.has('new')).toBe(true);
@@ -130,7 +130,7 @@ describe('NoteStore', () => {
 
       store.set('boundary', boundaryNote);
 
-      (store as any).evictExpired();
+      store.evictExpired();
 
       expect(store.has('boundary')).toBe(true); // Still valid (not < cutoff)
     });
@@ -144,7 +144,7 @@ describe('NoteStore', () => {
       store.set('expired2', { ciphertext: 'old2', createdAt: expiredTime });
       store.set('fresh', { ciphertext: 'new', createdAt: now });
 
-      (store as any).evictExpired();
+      store.evictExpired();
 
       expect(store.has('expired1')).toBe(false);
       expect(store.has('expired2')).toBe(false);
@@ -156,7 +156,7 @@ describe('NoteStore', () => {
       store.set('fresh1', { ciphertext: 'new1', createdAt: now });
       store.set('fresh2', { ciphertext: 'new2', createdAt: now });
 
-      (store as any).evictExpired();
+      store.evictExpired();
 
       expect(store.has('fresh1')).toBe(true);
       expect(store.has('fresh2')).toBe(true);
