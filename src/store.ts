@@ -26,7 +26,8 @@ class NoteStore {
     return this.notes.has(id);
   }
 
-  private evictExpired(): void {
+  /** @internal exposed for testing */
+  evictExpired(): void {
     const cutoff = Date.now() - TTL_MS;
     for (const [id, note] of this.notes) {
       if (note.createdAt < cutoff) this.notes.delete(id);

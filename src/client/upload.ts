@@ -4,11 +4,6 @@ const toBase64url = (buf: ArrayBuffer | Uint8Array): string =>
   btoa(String.fromCharCode(...new Uint8Array(buf instanceof ArrayBuffer ? buf : buf.buffer)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-function fromBase64url(s: string): Uint8Array {
-  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-}
-
 function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
