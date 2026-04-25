@@ -11,6 +11,12 @@ const fromBase64url = (str: string): Uint8Array<ArrayBuffer> => {
 
 const el = (id: string): HTMLElement => document.getElementById(id)!;
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function getFileId(): string {
   return location.pathname.split('/').pop() ?? '';
 }
@@ -50,6 +56,14 @@ function base64ToObjectUrl(base64: string, mimeType: string): string {
   return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
 }
 
+function renderMetadata(payload: FilePayload): void {
+  const sizeBytes = Math.round(payload.data.length * 0.75);
+  el('metaFileName').textContent = payload.name;
+  el('metaFileType').textContent = payload.type || 'unknown';
+  el('metaFileSize').textContent = formatBytes(sizeBytes);
+  el('fileMeta').classList.remove('hidden');
+}
+
 function setupDownload(payload: FilePayload): void {
   el('downloadBtn').addEventListener('click', () => {
     const url = base64ToObjectUrl(payload.data, payload.type);
@@ -62,7 +76,7 @@ function setupDownload(payload: FilePayload): void {
 }
 
 function renderPreview(payload: FilePayload): void {
-  el('fileName').textContent = payload.name;
+  renderMetadata(payload);
 
   if (payload.type.startsWith('image/')) {
     const img = el('previewImage') as HTMLImageElement;
