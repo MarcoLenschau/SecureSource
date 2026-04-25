@@ -8,7 +8,12 @@ function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 
-/** Reads a File as an ArrayBuffer. */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function readFile(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -18,7 +23,6 @@ function readFile(file: File): Promise<ArrayBuffer> {
   });
 }
 
-/** Strips EXIF from images by redrawing onto a canvas. Returns clean Blob. */
 async function stripExif(file: File): Promise<ArrayBuffer> {
   const url = URL.createObjectURL(file);
   return new Promise((resolve, reject) => {
@@ -39,30 +43,21 @@ async function stripExif(file: File): Promise<ArrayBuffer> {
   });
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function showMetadata(file: File, stripped: boolean): void {
+function showMetadata(file: File, exifStripped: boolean): void {
   el('metaName').textContent = file.name;
-  el('metaSize').textContent = formatBytes(file.size);
   el('metaType').textContent = file.type || 'unknown';
-  el('metaModified').textContent = new Date(file.lastModified).toLocaleString();
-  el('metaStripped').textContent = stripped ? 'Yes — EXIF removed via canvas' : 'No (non-image file)';
-  el('metadataBox').classList.remove('hidden');
+  el('metaSize').textContent = formatBytes(file.size);
+  el('metaModified').textContent = new Date(file.lastModified).toLocaleString('de-DE');
+  el('metaStripped').textContent = exifStripped ? 'Ja — EXIF via Canvas entfernt' : 'Nein (kein Bild)';
 }
 
 async function encryptBuffer(data: ArrayBuffer, name: string, type: string): Promise<{ ciphertext: string; key: ArrayBuffer; iv: Uint8Array }> {
   const payload = JSON.stringify({ name, type, data: toBase64url(data) });
   const encoded = new TextEncoder().encode(payload);
-
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
   const rawKey = await crypto.subtle.exportKey('raw', key);
-
   return { ciphertext: toBase64url(encrypted), key: rawKey, iv };
 }
 
@@ -72,7 +67,7 @@ async function uploadFile(ciphertext: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ciphertext }),
   });
-  if (!res.ok) throw new Error('Upload failed');
+  if (!res.ok) throw new Error('Upload fehlgeschlagen');
   const { id } = await res.json() as { id: string };
   return id;
 }
@@ -81,45 +76,78 @@ function showResult(id: string, key: ArrayBuffer, iv: Uint8Array): void {
   const fragment = `${toBase64url(key)}.${toBase64url(iv)}`;
   const link = `${location.origin}/file/${id}#${fragment}`;
   el<HTMLInputElement>('link').value = link;
-  el('uploadForm').classList.add('hidden');
   el('result').classList.remove('hidden');
-}
-
-async function handleUpload(): Promise<void> {
-  const fileInput = el<HTMLInputElement>('fileInput');
-  const file = fileInput.files?.[0];
-  if (!file) return;
-
-  if (file.size > MAX_FILE_BYTES) {
-    showError(`File too large (max ${formatBytes(MAX_FILE_BYTES)})`);
-    return;
-  }
-
-  const btn = el<HTMLButtonElement>('uploadBtn');
-  btn.disabled = true;
-  btn.textContent = 'Encrypting…';
-  el('metadataBox').classList.add('hidden');
-
-  try {
-    const isImage = file.type.startsWith('image/');
-    const data = isImage ? await stripExif(file) : await readFile(file);
-    showMetadata(file, isImage);
-
-    btn.textContent = 'Uploading…';
-    const { ciphertext, key, iv } = await encryptBuffer(data, file.name, file.type);
-    const id = await uploadFile(ciphertext);
-    showResult(id, key, iv);
-  } catch (err) {
-    showError(err instanceof Error ? err.message : 'Upload failed');
-    btn.disabled = false;
-    btn.textContent = 'Encrypt & Upload';
-  }
 }
 
 function showError(msg: string): void {
   const box = el('errorBox');
   box.textContent = msg;
   box.classList.remove('hidden');
+}
+
+// Pending upload state
+let pendingFile: File | null = null;
+let pendingData: ArrayBuffer | null = null;
+
+async function handlePreview(): Promise<void> {
+  const file = el<HTMLInputElement>('fileInput').files?.[0];
+  if (!file) return;
+
+  if (file.size > MAX_FILE_BYTES) {
+    showError(`Datei zu groß (max ${formatBytes(MAX_FILE_BYTES)})`);
+    return;
+  }
+
+  const btn = el<HTMLButtonElement>('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Lese Datei …';
+  el('errorBox').classList.add('hidden');
+
+  try {
+    const isImage = file.type.startsWith('image/');
+    const data = isImage ? await stripExif(file) : await readFile(file);
+
+    pendingFile = file;
+    pendingData = data;
+
+    showMetadata(file, isImage);
+    el('uploadForm').classList.add('hidden');
+    el('metaStep').classList.remove('hidden');
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Fehler beim Lesen der Datei');
+    btn.disabled = false;
+    btn.textContent = 'Encrypt & Upload';
+  }
+}
+
+async function handleEncrypt(): Promise<void> {
+  if (!pendingFile || !pendingData) return;
+
+  const btn = el<HTMLButtonElement>('encryptBtn');
+  btn.disabled = true;
+  btn.textContent = 'Verschlüsselt …';
+
+  try {
+    const { ciphertext, key, iv } = await encryptBuffer(pendingData, pendingFile.name, pendingFile.type);
+    btn.textContent = 'Lädt hoch …';
+    const id = await uploadFile(ciphertext);
+    el('metaStep').classList.add('hidden');
+    showResult(id, key, iv);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
+    btn.disabled = false;
+    btn.textContent = 'Verschlüsseln & Hochladen';
+  }
+}
+
+function handleBack(): void {
+  pendingFile = null;
+  pendingData = null;
+  el('metaStep').classList.add('hidden');
+  el('uploadForm').classList.remove('hidden');
+  const btn = el<HTMLButtonElement>('uploadBtn');
+  btn.disabled = false;
+  btn.textContent = 'Encrypt & Upload';
 }
 
 el('fileInput').addEventListener('change', () => {
@@ -132,7 +160,9 @@ el('fileInput').addEventListener('change', () => {
   el('errorBox').classList.add('hidden');
 });
 
-el('uploadBtn').addEventListener('click', handleUpload);
+el('uploadBtn').addEventListener('click', handlePreview);
+el('encryptBtn').addEventListener('click', handleEncrypt);
+el('backBtn').addEventListener('click', handleBack);
 
 el('copyBtn').addEventListener('click', async () => {
   const val = el<HTMLInputElement>('link').value;
@@ -142,7 +172,6 @@ el('copyBtn').addEventListener('click', async () => {
   setTimeout(() => { btn.textContent = 'Kopieren'; }, 2000);
 });
 
-// Drag & drop
 const dropZone = el('dropZone');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
