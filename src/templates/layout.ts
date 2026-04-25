@@ -85,8 +85,8 @@ const headerHtml = `
   <header class="site-header sticky top-0 z-10 w-full">
     <div class="max-w-screen-lg mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <img src="/logo.svg" alt="SecureDrop" class="w-7 h-7" />
-        <span class="mono text-sm font-medium">SecureDrop</span>
+        <img src="/logo.svg" alt="SecureSource" class="w-7 h-7" />
+        <span class="mono text-sm font-medium">SecureSource</span>
       </div>
       <button id="themeToggle" class="theme-btn w-9 h-9 flex items-center justify-center rounded-lg" title="Theme wechseln"></button>
     </div>
